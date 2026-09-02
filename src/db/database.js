@@ -1,24 +1,41 @@
-const path = require('path');
-const Database = require('better-sqlite3');
+const mysql = require('mysql2/promise');
+require('dotenv').config();
 
-// La base de datos se guarda como un archivo local: database.sqlite
-const dbPath = path.join(__dirname, '..', '..', 'database.sqlite');
-const db = new Database(dbPath);
+// Crear el pool de conexiones
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
 
-// Creamos la tabla de usuarios si no existe todavia.
-// - verificado: 0 = pendiente de confirmar correo, 1 = cuenta confirmada
-// - token_verificacion: codigo unico que se envia por correo para confirmar la cuenta
-db.exec(`
-  CREATE TABLE IF NOT EXISTS usuarios (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    password TEXT NOT NULL,
-    verificado INTEGER NOT NULL DEFAULT 0,
-    token_verificacion TEXT,
-    token_expira TEXT,
-    creado_en TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-`);
+// Crear la tabla si no existe (Sintaxis MySQL)
+const inicializarBaseDatos = async () => {
+  const query = `
+    CREATE TABLE IF NOT EXISTS usuarios (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      nombre VARCHAR(100) NOT NULL,
+      email VARCHAR(100) UNIQUE NOT NULL,
+      password VARCHAR(255) NOT NULL,
+      verificado BOOLEAN DEFAULT FALSE,
+      token_verificacion VARCHAR(255),
+      token_expira DATETIME,
+      creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+  try {
+    await pool.query(query);
+    console.log('Estructura de MySQL verificada/creada con éxito.');
+  } catch (error) {
+    console.error('Error al inicializar MySQL:', error);
+  }
+};
 
-module.exports = db;
+inicializarBaseDatos();
+
+// Exportación usando el formato CommonJS compatible con tu repositorio
+module.exports = pool;
