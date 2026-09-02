@@ -16,6 +16,7 @@
     <input type="text" id="nombre" placeholder="Nombre completo" required />
     <input type="email" id="email" placeholder="Correo electrónico" required />
     <input type="password" id="password" placeholder="Contraseña" required />
+    <input type="password" id="confirmPassword" placeholder="Confirmar contraseña" required />
     <button type="submit">Registrarme</button>
   </form>
   <p id="mensaje"></p>
@@ -31,6 +32,22 @@
       const nombre = document.getElementById('nombre').value;
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value; 
+      const passwordValid = password.length >= 8;
+      
+      const passwordsEqual = password === confirmPassword;
+      
+      if (!passwordsEqual) { 
+        mensaje.style.color = 'red'; 
+        mensaje.textContent = 'Las contraseñas no coinciden'; 
+        return; 
+      }
+      
+       if (!passwordValid) {
+        mensaje.style.color = 'red';
+        mensaje.textContent = 'La contraseña debe tener al menos 8 caracteres';
+        return;
+      }
 
       try {
         const res = await fetch('/api/registro', {
