@@ -1,3 +1,10 @@
+## Actualización: migración a MySQL
+
+Este proyecto ahora usa MySQL en vez de SQLite. Antes de correrlo:
+1. Tener MySQL 
+2. Crear la base de datos: `CREATE DATABASE proyecto_registro;`
+3. Configurar `.env` con las credenciales de MySQL (ver `.env.example`)
+
 # Proyecto: Registro de Usuarios con Verificación por Correo
 
 Stack: **Node.js + Express + SQLite (better-sqlite3)**
