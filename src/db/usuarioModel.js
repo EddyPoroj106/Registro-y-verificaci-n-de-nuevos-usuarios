@@ -1,42 +1,35 @@
 const db = require('./database');
 
 // Todas las funciones que tocan la tabla "usuarios" viven aqui.
-// Adaptado para trabajar de forma asíncrona con MySQL (mysql2)
+// Esto es lo que en el diagrama de clases seria la clase "UsuarioRepository" o "UsuarioDAO".
 
-async function crearUsuario({ nombre, email, passwordHash, token, tokenExpira }) {
-  const query = `
+function crearUsuario({ nombre, email, passwordHash, token, tokenExpira }) {
+  const stmt = db.prepare(`
     INSERT INTO usuarios (nombre, email, password, verificado, token_verificacion, token_expira)
-    VALUES (?, ?, ?, 0, ?, ?);
-  `;
-  const [resultado] = await db.query(query, [nombre, email, passwordHash, token, tokenExpira]);
-  return resultado.insertId; // MySQL devuelve el ID generado aquí
+    VALUES (?, ?, ?, 0, ?, ?)
+  `);
+  const info = stmt.run(nombre, email, passwordHash, token, tokenExpira);
+  return info.lastInsertRowid;
 }
 
-async function buscarPorEmail(email) {
-  const query = 'SELECT * FROM usuarios WHERE email = ?';
-  const [rows] = await db.query(query, [email]);
-  return rows.length > 0 ? rows[0] : null; // Retorna el usuario o null si no existe
+function buscarPorEmail(email) {
+  return db.prepare('SELECT * FROM usuarios WHERE email = ?').get(email);
 }
 
-async function buscarPorToken(token) {
-  const query = 'SELECT * FROM usuarios WHERE token_verificacion = ?';
-  const [rows] = await db.query(query, [token]);
-  return rows.length > 0 ? rows[0] : null; // Retorna el usuario o null si no existe
+function buscarPorToken(token) {
+  return db.prepare('SELECT * FROM usuarios WHERE token_verificacion = ?').get(token);
 }
 
-async function marcarComoVerificado(id) {
-  const query = `
+function marcarComoVerificado(id) {
+  db.prepare(`
     UPDATE usuarios
     SET verificado = 1, token_verificacion = NULL, token_expira = NULL
     WHERE id = ?
-  `;
-  await db.query(query, [id]);
+  `).run(id);
 }
 
-async function listarUsuarios() {
-  const query = 'SELECT id, nombre, email, verificado, creado_en FROM usuarios';
-  const [rows] = await db.query(query);
-  return rows; // Retorna la lista de usuarios
+function listarUsuarios() {
+  return db.prepare('SELECT id, nombre, email, verificado, creado_en FROM usuarios').all();
 }
 
 module.exports = {
